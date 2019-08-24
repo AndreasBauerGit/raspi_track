@@ -1,0 +1,30 @@
+import time 
+import datetime 
+import picamera
+
+def d_t(t1,t2):
+## returns delt time in milliseconds
+        dt=(t1.hour*60*60*10**6+t1.minute*60*10**6+t1.second*10**6+t1.microsecond)-(t2.hour*60*60*10**6+t2.minute*60*10**6+t2.second*10**6+t1.microsecond)
+        return dt*10**-3
+framerate=5# in fps
+with open("log.txt","a+")as f:
+	f.write("start_time " +str(datetime.datetime.now())+"/n")
+	f.write("script python_imaging4")
+	f.write("framerate "+str(framerate)+"/n")
+
+n=500000
+with picamera.PiCamera() as camera:
+	camera.start_preview()
+	camera.resolution = (1280, 720)
+	
+	camera.framerate = framerate
+	time.sleep(2)
+	camera.shutter_speed=camera.exposure_speed
+	print("shutter",camera.shutter_speed)
+	g=camera.awb_gains
+	print("gain",g)
+	camera.awb_mode="off"
+	camera.awb_gains=g
+	print("start",datetime.datetime.now())
+	camera.capture_sequence(["img%06d.jpg"%i for i in range(n)],use_video_port=True)
+print("finished",datetime.datetime.now())
