@@ -114,11 +114,11 @@ with picamera.PiCamera() as camera:
             # saving the time point of image acquisition 
             dt=d_t(datetime.datetime.now(),times[n-1]) #check how much time was needed
             if dt/1000<spf: # wait until next image for the rest if possible
-		time.sleep(frame_rate-dt/1000)
+                time.sleep(frame_rate-dt/1000)
             print(times[n])
             if n%300==0: # saving time points ever 300 frames
-		with open('/media/pi/7419-BE6E/Ants/times.pickle', 'wb') as f:
-			pickle.dump(times, f, protocol=pickle.HIGHEST_PROTOCOL)
+                with open('/media/pi/7419-BE6E/Ants/times.pickle', 'wb') as f:
+                    pickle.dump(times, f, protocol=pickle.HIGHEST_PROTOCOL)
             n += 1
  
 # saving timestamps once imaging is done
