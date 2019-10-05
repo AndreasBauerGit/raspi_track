@@ -17,17 +17,14 @@ from stitching import *
 from tracking import *
 
 def d_t(t1,t2):
-
 	'''
 	calculates the time diffrence between to datetime objects 
 	:param: t1: datetime object, first time point
 	:param: t2: datetime object, second time point
 	returns: time diffrence between t1 and t2 in milli seconds
 	'''
-
-	dt=(t1.minute*60*1000000+t1.second*1000000+t1.microsecond)-					(t2.minute*60*1000000+t2.second*1000000+t2.microsecond)
+	dt=(t1.minute*60*1000000+t1.second*1000000+t1.microsecond)-(t2.minute*60*1000000+t2.second*1000000+t2.microsecond)
 	return dt*10**-3
-
 
 
 # Parameters: see instructions for details
@@ -36,6 +33,7 @@ def d_t(t1,t2):
 n_frames = 40  # number of frames to be recorded
 spf = 5  # interval between images in seconds
 keep_images = True  # don't remove images after acquisition
+camera_resolution= (1400, 1000)
 
 # settings for detection and tracking
 s1 = 12  # large sigma for difference of gaussian filters
@@ -55,25 +53,34 @@ mean_dist = 30  # minimal average distance between two tracks to allow removal a
 # change video settings in the corresponding function
 
 # output files and others
-folder="/home/pi/Desktop/images_camera4/"
-file = "/tracks.txt"  # output file for the unfiltered/unstitched tracks
-file2 = "/tracks2.txt"  # output file for stitched/filtered tracks
-file_times = '/times.pickle'  # output file for times: uses pickle format
-out_img = "/rec%s.jpeg"  # output format for the images
+folder="/home/pi/Desktop/images_camera/"
+file = "tracks.txt"  # output file for the unfiltered/unstitched tracks
+file2 = "tracks2.txt"  # output file for stitched/filtered tracks
+file_times = 'times.pickle'  # output file for times: uses pickle format
+out_img = "rec%s.jpeg"  # output format for the images
 # %s signifies where numbers are inserted; don't remove this
-mask = np.load("/home/pi/Desktop/bugs_scripts/mask.npy")  # mask of dish area; make sure the path is correct
+#mask = np.load("/home/pi/Desktop/bugs_scripts/mask.npy")  # mask of dish area; make sure the path is correct
+mask = np.load(os.path.join(os.getcwd(),"mask.npy"))
 n_zfill = 5  # number of zeros padded to the output name of images. Must not be to small.
 
 
-######
-if os.path.isfile(file):  # deleting old text file if it exists
-        os.remove(file)
+
+
+# interpolating mask to suitable size
+mask=interpolation(mask,dims=(camera_resolution[1],camera_resolution[0]))        
+mask=mask.astype(bool)
 
 #filling the path for the files
 file=os.path.join(folder,file)
 file2=os.path.join(folder,file2)
 file_times=os.path.join(folder,file_times)
 out_img=os.path.join(folder,out_img)
+
+
+######
+if os.path.isfile(file):  # deleting old text file if it exists
+        os.remove(file)
+
 
 # empty variables for tracking
 prev_detections = np.array([])  # list of detections from the previous frame
@@ -86,7 +93,7 @@ times[-1]=datetime.datetime.now() # first time point befor recording and anlyisi
 # imaging and tracking
 with picamera.PiCamera() as camera:
         # initializing the camera
-        camera.resolution = (1400, 1000)
+        camera.resolution = camera_resolution
         camera.start_preview()
         # waiting 5 seconds, allows the camera to automatically set good values for exposure time and gain
         time.sleep(5)
@@ -107,17 +114,15 @@ with picamera.PiCamera() as camera:
             # conversion to grey scale
             image = np.mean(output, axis=2)
             # tracking and writing to file for each step
-            prev_tracks, prev_detections, max_track_id = tracking(image, mask,
-                    prev_tracks, max_track_id, prev_detections, frame,
-                    file, sd_threshold, max_dist, min_size, s1, s2, min_treshohld)
+            prev_tracks, prev_detections, max_track_id = tracking(image, mask, prev_tracks, max_track_id, prev_detections, frame, file, sd_threshold, max_dist, min_size, s1, s2, min_treshohld)
             times[n]=datetime.datetime.now()
             # saving the time point of image acquisition 
             dt=d_t(datetime.datetime.now(),times[n-1]) #check how much time was needed
             if dt/1000<spf: # wait until next image for the rest if possible
-                time.sleep(frame_rate-dt/1000)
+                time.sleep(spf-dt/1000)
             print(times[n])
             if n%300==0: # saving time points ever 300 frames
-                with open('/media/pi/7419-BE6E/Ants/times.pickle', 'wb') as f:
+                with open(os.path.join(folder,'times.pickle'), 'wb') as f:
                     pickle.dump(times, f, protocol=pickle.HIGHEST_PROTOCOL)
             n += 1
  
@@ -141,12 +146,12 @@ tracks_f_arr = return_track_array(tracks_f, frame_number=frame_number)
 write_tracks2(tracks_stitched_arr, file2)
 
 # makeing a video
-folder = "/home/pi/Desktop/images_camera4/"
+#folder = "/home/pi/Desktop/images_camera/"
 tracks_dict, frame_number = read_tracks(file2)  # reading tracks dict
 tracks_arr = return_track_array(tracks_dict, frame_number)
 
 # generating a list of frames
-frames = list(range(40))
+frames = list(range(n_frames))
 
 # generating a list of paths to images
 root_im = out_img

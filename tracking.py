@@ -13,6 +13,27 @@ from collections import defaultdict
 import copy
 from tqdm import tqdm
 
+
+
+def interpolation(mask, dims):
+	# only works when interpolating to lower resolution
+	# note: remove_small_objects labels automatically if mask is bool
+	coords = np.array(np.where(mask)).astype(float) # coordinates of all points
+	interpol_factors = np.array([dims[0] / mask.shape[0], dims[1] / mask.shape[1]])
+	coords[0] = coords[0] * interpol_factors[0]  # interpolating x coordinates
+	coords[1] = coords[1] * interpol_factors[1]  # interpolating xy coordinates
+	coords = np.round(coords).astype(int)
+	
+	coords[0,coords[0]>=dims[0]]=dims[0]-1 # fixing issue when interpolated object is just at the image border
+	coords[1, coords[1] >= dims[1]] = dims[1]-1
+	
+	mask_int = np.zeros(dims)
+	mask_int[coords[0], coords[1]] = 1
+	mask_int = mask_int.astype(int)
+	#filling gaps if we interpolate upwards
+	return mask_int
+
+
 def write_tracks(tracks,detections,file,frame,max_track_id):
 
     '''
@@ -58,7 +79,19 @@ def write_tracks(tracks,detections,file,frame,max_track_id):
         f.write(line)
       
 
-
+def show_single_tracking_step(image,prev_detections,detections,prev_tracks,tracks):
+    plt.figure()
+    plt.imshow(image)
+    for i,pd in enumerate(prev_detections):
+        if prev_tracks[i] in tracks.values(): # connected detection
+            p1=prev_detections[i]
+            p2=detections[[y for y,x in tracks.items() if x==prev_tracks[i]][0]]
+            plt.plot([p1[1],p2[1]],[p1[0],p2[0]],color="C3",linewidth=5)
+        p1 = prev_detections[i] # plotting all points
+        plt.plot(p1[1], p1[0],"o", color="C0")
+    for i,d in enumerate(detections):
+        p1 = detections[i] # plotting all tracks
+        plt.plot(p1[1], p1[0], "o", color="C1")
 
 
 def tracking(image,mask,prev_tracks,max_track_id,prev_detections,frame,
@@ -113,10 +146,10 @@ def tracking(image,mask,prev_tracks,max_track_id,prev_detections,frame,
             # assignnemnt of detections, col_ind is index from
             # previous detections, row ind is from new detections
             row_ind, col_ind = [], []
-            while np.nanmin(distances< max_dist):# stops when maximum distance is reached
-
+            min_dist=0
+            while np.nanmin(min_dist< max_dist) and not np.isnan(distances).all():# stops when maximum distance is reached
                 min_pos = list(np.unravel_index(np.nanargmin(distances), distances.shape)) # position of the smallest
-                min=[min_pos[0],min_pos[1]] # value of the smalles distance
+                min_dist=distances[min_pos[0],min_pos[1]] # value of the smalles distance
                 # filling the other entries involving these two detections with nan
                 distances[min_pos[0], :] = np.nan
                 distances[:, min_pos[1]] = np.nan
@@ -137,9 +170,13 @@ def tracking(image,mask,prev_tracks,max_track_id,prev_detections,frame,
                     max_track_id+=1 # update highest track id
                     tracks[all_ind]= max_track_id # new entry in tracks dictionary
 
+
+        #show_single_tracking_step(image, prev_detections, detections, prev_tracks, tracks)
         prev_tracks=copy.deepcopy(tracks) # saving track assignment
         prev_detections=copy.deepcopy(detections) # saving for the next round of tracking
         track_ids=np.array(list(tracks.keys())) # list of all ids in this assignment
+
+
 
         #writing tracks to file
         write_tracks(tracks,detections,file,frame=frame,max_track_id=max_track_id)
