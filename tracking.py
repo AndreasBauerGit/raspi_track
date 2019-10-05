@@ -14,6 +14,16 @@ import copy
 from tqdm import tqdm
 
 
+def createFolder(directory):
+    '''
+    function to create directories, if they dont already exist
+    '''
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print('Error: Creating directory. ' + directory)
+
 
 def interpolation(mask, dims):
 	# only works when interpolating to lower resolution

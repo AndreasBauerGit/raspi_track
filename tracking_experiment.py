@@ -80,8 +80,7 @@ out_img=os.path.join(folder,out_img)
 ######
 if os.path.isfile(file):  # deleting old text file if it exists
         os.remove(file)
-
-
+createFolder(folder) #creating outputfolder if it doesnt exsist
 # empty variables for tracking
 prev_detections = np.array([])  # list of detections from the previous frame
 prev_tracks = {}  # dictionary assigning "index in prev_detection list":"track id"
