@@ -31,7 +31,7 @@ def d_t(t1,t2):
 
 # settings for image recording
 n_frames = 40  # number of frames to be recorded
-spf = 5  # interval between images in seconds
+spf = 6  # interval between images in seconds
 keep_images = True  # don't remove images after acquisition
 camera_resolution= (1400, 1000)
 
