@@ -107,8 +107,10 @@ def make_tracks_video(tracks_arr,frames,folder,gaps=0,show_trailing=5,dims=(1000
     plt.ylim((0,dims[0]))
     width, height = (fig.get_size_inches() * fig.get_dpi()).astype(int) # dimensions of th created figures
     # initializing video with cv2
-    fourcc = cv2.VideoWriter_fourcc(*'H264') # suitable encoding for videos
-    video = cv2.VideoWriter(os.path.join(folder, name+".avi"), fourcc,fps, (width,height))
+    #fourcc = cv2.VideoWriter_fourcc(*'H264') # suitable encoding for videos
+    fourcc = cv2.VideoWriter_fourcc(*'MJPG') # suitable encoding for videos
+
+    video = cv2.VideoWriter(os.path.join(folder, name+".avi"),fourcc,fps, (width,height))
     plt.close(1)  # closes previous figure
 
     # iterating through all frames
