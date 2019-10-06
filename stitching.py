@@ -289,7 +289,7 @@ def remove_parralle_tracks(tracks_dict,tracks_arr,end_dist=30,mean_dist=30):
     # be smaller then their threshold values
     exclude=(dists[:,:,0]<end_dist)*(dists[:,:,1]<end_dist)*(dists[:,:,2]<mean_dist)
     # all rows in the distance matrix where exclude is true represent "parallel" tracks
-    ex_ids=ids[np.where(exclude)[0]] # list of track ids classified as parallel
+    ex_ids=np.unique(ids[np.where(exclude)[0]]) # list of track ids classified as parallel
     # deleting these ids from the dictionary
     for i in ex_ids:
         del(tracks_dict_filtered[i])
