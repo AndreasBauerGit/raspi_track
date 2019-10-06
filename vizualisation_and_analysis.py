@@ -173,7 +173,10 @@ def make_tracks_video(tracks_arr,frames,folder,gaps=0,show_trailing=5,dims=(1000
         # closing the figure
         plt.close(1)
     # clsoing the video object
-    cv2.destroyAllWindows()
+    try:
+        cv2.destroyAllWindows()
+    except cv2.error as e:
+        print(e)
     video.release()
     plt.ion() # switching interactive matplotlib plotting back on
     plt.close("all") # closing all remaining figures, some figures seem to be hidden somehow..
