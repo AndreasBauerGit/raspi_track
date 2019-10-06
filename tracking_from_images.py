@@ -126,4 +126,8 @@ dims = plt.imread(image_list[0]).shape
 
 # producing the video
 figures = make_tracks_video(tracks_arr, frames, folder, show_trailing=3, fps=3,
-                          dims=dims, images=image_list, name="out")
+                          dims=dims, images=image_list, name="out1")
+
+
+#figures = make_tracks_video(tracks_stitched_arr, frames, folder, show_trailing=3, fps=3,
+#                          dims=dims, images=image_list, name="out2")
